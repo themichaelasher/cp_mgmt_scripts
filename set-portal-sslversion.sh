@@ -1,5 +1,11 @@
 #!/bin/bash
 #
+# This script will set the minimum TLS version for the platform portals. 
+# The default value is TLS_1.0 (through R81) and many times needs to be changed to TLS1.2
+# See sk109256 for more information
+# - https://supportcenter.checkpoint.com/supportcenter/portal?eventSubmit_doGoviewsolutiondetails=&solutionid=sk109256
+#
+# This uses the undocumented generic-object API functionality, so you should test in a lab first. 
 
 _domains=`mgmt_cli -r true show domains -f json | jq -r .total`
 
