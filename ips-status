@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Basic script to show the status of IPS database.
+# Not sure this is needed for the SMS, but can be helpful for MDS.
+#
+
+_domains=`mgmt_cli -r true show domains -f json | jq -r .total`
+
+function mdsdomains(){
+    DOMAINS=(`mgmt_cli -r true show domains -f json | jq -r '.objects[]|.name'`)
+    DOMAINS+=("Global")
+}
+
+
+function dump_ips_status(){
+        if [ $_domains -eq 0 ]; then
+        mgmt_cli -r true login > id.txt
+                INSTALLED=`mgmt_cli -s id.txt show ips-status -f json | jq -r '."installed-version"'`
+                LATEST=`mgmt_cli -s id.txt show ips-status -f json | jq -r '."latest-version"'`
+                if [[ "${INSTALLED}" -lt "${LATEST}" ]];
+                then
+                        echo -n "Warning: IPS Out of Date on $(hostname) - "
+                        echo "Installed: ${INSTALLED} | Latest: ${LATEST}"
+                else
+                        echo -n "No updates necessary for $(hostname) - "
+                        echo "Installed: ${INSTALLED} | Latest: ${LATEST}"
+                fi
+
+
+        # Set "fake" domain for SMS
+        _domain="SMS"
+    else
+        mdsdomains
+        for _domain in ${DOMAINS[@]}; do
+                mgmt_cli -r true -d ${_domain} login > id.txt
+                INSTALLED=`mgmt_cli -s id.txt show ips-status -f json | jq -r '."installed-version"'`
+                LATEST=`mgmt_cli -s id.txt show ips-status -f json | jq -r '."latest-version"'`
+                if [[ "${INSTALLED}" -lt "${LATEST}" ]];
+                then
+                        echo -n "Warning: IPS Out of Date on $(hostname): ${_domain} - "
+                        echo "Installed: ${INSTALLED} | Latest: ${LATEST}"
+                else
+                        echo -n "No updates necessary for $(hostname): ${_domain} - "
+                        echo "Installed: ${INSTALLED} | Latest: ${LATEST}"
+                fi
+
+        done
+    fi
+}
+dump_ips_status
