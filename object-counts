@@ -1,0 +1,66 @@
+#!/bin/bash
+# Output object and rule counts.
+# Untested on stand-alone, but I don't see why it wouldn't work.
+
+_domains=`mgmt_cli -r true show domains -f json | jq -r .total`
+
+ASSETS=("hosts" "networks" "wildcards" "groups" "simple-gateways"  "simple-clusters" "address-ranges" "packages" "access-layers")
+echo "domain" ${ASSETS[@]} | tr ' ' "," > `hostname`.objects.csv
+echo "domain,access-layer,rule count" > `hostname`.rules.csv
+function mdsdomains(){
+    DOMAINS=(`mgmt_cli -r true show domains -f json | jq -r '.objects[]|.name'`)
+    # Add global domain as it does not show off in the show domains list.
+    DOMAINS+=("Global")
+}
+
+function objectdata(){
+    echo "Exporting: ${_domain}"
+    declare -a assetcount=()
+    for asset in ${ASSETS[@]}
+    do
+        assetcount+=( "$(mgmt_cli -s id.txt show ${asset} details-level full  -f json limit 1 | jq -r '.total')")
+    done
+
+    echo ${_domain},${assetcount[@]}|tr ' ' ',' >> `hostname`.objects.csv
+}
+
+function policydata(){
+    echo "Exporting: ${_domain} policy counters"
+    # Needed to keep up with "spaces
+    touch access-layers
+    PACKAGES=(`mgmt_cli -s id.txt show packages -f json | jq -r ".packages[].name" | tr '\n' ' '`)
+    for i in ${PACKAGES[@]}
+    do
+      mgmt_cli -s id.txt show package name ${i} details-level full -f json | jq -r '."access-layers"[]|select(.domain.type != "global domain")|.name' >> access-layers
+    done
+    #sed -i -e 's/^/\"/' -e 's/$/\"/' access-layers"
+    while read -r policy; do
+      echo "${_domain},${policy},$(mgmt_cli -s id.txt show access-rulebase name "${policy}" limit 1 -f json | jq -r .total)" >> `hostname`.rules.csv
+    done < access-layers
+    rm access-layers
+
+}
+
+
+function dump_info(){
+    if [ $_domains -eq 0 ]; then
+        mgmt_cli -r true login > id.txt
+        # Set "fake" domain for SMS
+        _domain="SMS"
+        objectdata
+        policydata
+        mgmt_cli -s id.txt logout
+        rm id.txt
+    else
+        mdsdomains
+        for _domain in ${DOMAINS[@]}; do
+           mgmt_cli -r true -d ${_domain} login > id.txt
+           objectdata
+           policydata
+           mgmt_cli -s id.txt logout
+           rm id.txt
+        done
+    fi
+}
+
+dump_info
