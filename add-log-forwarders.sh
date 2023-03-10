@@ -3,12 +3,12 @@
 # Script to set the log forwarding settings on the gateway objects.
 #
 # Changelog
+# - 2023031001 - Changed output to display logserver name rather than UID
 # - 2023021401 - Added logging output for visibilidy to all commands.
 # - 2023021301 - Initial script creation by (masher|ianw)
 #
 # TODO:
 # - Show changes before publish
-# - Cleanup error messages on missing files
 #
 ###############################################################
 
