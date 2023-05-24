@@ -3,7 +3,7 @@
 OUTPUTDIR="/home/admin/inventory"
 ID="${OUTPUTDIR}/session.id"
 
-if [! -x ${OUTPUTDIR} ]
+if [! -x ${OUTPUTDIR} ]; then
         mkdir ${OUTPUTDIR}
 fi
 
