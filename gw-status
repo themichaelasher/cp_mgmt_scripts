@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Simple script to export gw object data and sic-status. 
+#
+# Versions:
+# - 2023052402 - include missing CPMI objects
+# - 2023052401 - Initial versions
+
+
+OUTPUTDIR="`pwd`/gw_status"
+ID="${OUTPUTDIR}/session.id"
+
+if [ ! -x ${OUTPUTDIR} ]; then
+        mkdir ${OUTPUTDIR}
+fi
+
+cd ${OUTPUTDIR}
+
+echo "DOMAIN,GATEWAY OBJECT,IP ADDRESS,OBJECT TYPE,SIC STATUS" > gw_status.output
+mgmt_cli -r true -d "System Data" show gateways-and-servers details-level full -f json | jq '.objects[]|select(.type =="CpmiClusterMember" or .type=="simple-gateway" or .type=="simple-cluster" or .type=="CpmiVsxClusterMember" or .type=="CpmiVsNetobj" or .type=="cluster-member" or .type=="CpmiVsClusterNetobj")|[.domain.name, .name,."ipv4-address", .type,."sic-status"]|@csv' >> gw_status.output
+
+echo "Script Complete"
+echo "Output file: `pwd`/gw_status.output"
+echo -ne "Data\n\n"
+column -s, -t -o " " gw_status.output | tr '"' ' ' | tr '\\' ' ' | sed -e 's/^   //g'
