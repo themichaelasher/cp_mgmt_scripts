@@ -92,7 +92,7 @@ function set_log_forwarding(){
     # Fetch the GW list and UIDs
     # The CSV file generated in the be adjusted slightly.
 
-    mgmt_cli show gateways-and-servers -f json | jq '.objects[]|select(.type | contains("CpmiGatewayCluster") or contains("simple-gateway") or contains("CpmiVsxNetobj") or contains("CpmiVsNetobj") or contains("CpmiVsxClusterNetobj"))|[.name,.uid]|@csv' | sed -e 's/[\"]//g' >> ${OUTPUTDIR}/${domain}.gw.list
+    mgmt_cli show gateways-and-servers -f json | jq '.objects[]|select(.type | contains("CpmiGatewayCluster") or contains("simple-gateway") or contains("CpmiVsxNetobj") or contains("CpmiVsNetobj") or contains("CpmiVsxClusterNetobj") or contains("CpmiVsxClusterNetobj"))|[.name,.uid]|@csv' | sed -e 's/[\"]//g' >> ${OUTPUTDIR}/${domain}.gw.list
 
 
     # Rotate through GW list and find default log server
@@ -108,7 +108,7 @@ function set_log_forwarding(){
     while IFS=, read -r gwname gwuid loguid
     do
       logname="`mgmt_cli show generic-object uid ${loguid} -f json |jq -r .name`"
-      echo -e "  Changing: ${gwname} to forward to ${logname} at ${DEFAULTTIME})"
+      echo -e "  Changing: ${gwname} to forward to ${logname} at ${DEFAULTTIME}"
       mgmt_cli set generic-object uid ${gwuid} logPolicy.forwardLogs true logPolicy.logForwardTarget ${loguid} logPolicy.logForwardSchedule ${DEFAULTTIMEUID}
     done < ${OUTPUTDIR}/${domain}.gwandlogserver.list
 
