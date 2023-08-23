@@ -2,12 +2,19 @@
 #
 # Script to retrieve the log forwarding settings on the gateway objects.
 # Outputs data to `pwd`/final-output.csv and to SSH/console session.
-# This is only written for MDSM. 
 #
 # Changelog
-# - 2023081501 - Initial script creation. 
+# - 2023082301 - Add debug log, removed CpmiVsClusterNetobj from filter list.
+# - 2023081501 - Initial script creation.
 ###############################################################
 
+
+DEBUGLOG="`pwd`/dbg.show-log-forwarders.log"
+[[ -f ${DEBUGLOG} ]] && mv ${DEBUGLOG}{,.bak}
+[[ ! -f ${DEBUGLOG} ]] && touch ${DEBUGLOG}
+
+set -x
+(
 # Pull the total number of gateways and objects
 GWCOUNT="$(mgmt_cli -r true show gateways-and-servers -f json | jq .total)"
 declare -a DOMAINS=(`mgmt_cli -r true show domains -f json | jq -r '.objects[]|.name'`)
@@ -25,7 +32,7 @@ do
   export MGMT_CLI_SESSION_FILE="${_domain}.id"
 
   # Counter and offset is needed to cycle through all possible objects.
-  _counter=0 
+  _counter=0
 
   # Fetch all of the gateways
   #
@@ -40,7 +47,7 @@ do
   # This filter has some "placeholder" gateways and other objects that are unnecessary
   #
   echo "    Filtering GW list"
-  grep -v -E "placeholder|member|placer|checkpoint-host|CpmiVsClusterNetobj|Member" "gw.${_domain}.list"  >  "gw.${_domain}.filtered.list"
+  grep -v -E "placeholder|member|placer|checkpoint-host|Member" "gw.${_domain}.list"  >  "gw.${_domain}.filtered.list"
 
   # Fetch the log server information
   # This information isn't necessary, but it is nice to know.
@@ -53,7 +60,7 @@ do
   done < "gw.${_domain}.filtered.list"  >> "gw.${_domain}.withloguid.list"
 
   # Fetch the log forwarding target uid and convert to name
-  # 
+  #
   echo "    Fetching logForwardTarget values"
   touch "gw.${_domain}.withlogforwardtarget.list"
   while IFS=, read -r name domain type uid loguid
@@ -81,7 +88,7 @@ do
   done < "gw.${_domain}.withlogforwardtarget.list" >> "gw.${_domain}.withschedule.list"
 
   # Finally, convert the log server and convert to name
-  # 
+  #
   while IFS=, read -r name domain type uid loguid logforwardname logschedulename
   do
     if [[ -z "${loguid}" && -n "${loguid}" ]]; then
@@ -95,15 +102,15 @@ do
       fi
     fi
   done < "gw.${_domain}.withschedule.list" >> "gw.${_domain}.converted.list"
-  
-  # Properly logout of the API 
+
+  # Properly logout of the API
   #
   echo -e "    ${CYAN}${_domain} completed.${NC} \n\n"
   mgmt_cli logout 1> /dev/null
   unset MGMT_CLI_SESSION_FILE
 done
 
-# Build the final CSV file 
+# Build the final CSV file
 #
 echo '"Gateway","Domain","Object Type","Defined Log Server","Log Forward Target","Log Forward Schedule"' > final-output.csv
 cat *.converted*.list >> final-output.csv
@@ -113,8 +120,11 @@ rm *.list
 rm *.id
 
 # Display CSV to screen.
-echo -e "${CYAN}Final output is in ${RED}$(pwd)/final-output.csv ${NC}"
-echo -ne "\n\n"
+echo -ne "\n"
 cat final-output.csv | column -t -s,  | sed -e 's/"//g'
+echo -ne "\n${CYAN}Final output is in ${RED}$(pwd)/final-output.csv ${NC}"
+echo -ne "\nDebug log is saved to ${RED}${DEBUGLOG}${NC}\n\n"
+) 2> ${DEBUGLOG}
+
 
 # Fin.
