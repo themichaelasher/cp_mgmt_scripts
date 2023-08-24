@@ -95,7 +95,7 @@ function find_scheduled_times(){
     DOMAINSKIP=1
   fi
 
-  DEFAULTTIMEUID="$(mgmt_cli  show generic-objects class-name com.checkpoint.objects.classes.dummy.CpmiScheduledEvent -f json details-level full -f json | jq -r '.objects[]|select(.name | contains ("'"${DEFAULTTIME}"'"))|.uid')"
+  DEFAULTTIMEUID="$(mgmt_cli  show generic-objects class-name com.checkpoint.objects.classes.dummy.CpmiScheduledEvent -f json details-level full -f json | jq -r '.objects[]|select(.name == "'"${DEFAULTTIME}"'")|.uid')"
 }
 
 # Run throgh the process of setting eash GW to the proper log forwarding destination.
