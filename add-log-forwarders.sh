@@ -149,7 +149,7 @@ function set_log_forwarding(){
           echo -e "  Error: Unable to find log server name for ${gwname} (Loguid: $loguid)"
         fi
           echo -e "  Changing: ${gwname} (Forward to ${logname} at ${DEFAULTTIME})"
-          mgmt_cli set generic-object uid ${gwuid} logPolicy.forwardLogs true logPolicy.logForwardTarget ${loguid} logPolicy.logForwardSchedule ${DEFAULTTIMEUID}
+          [[ $DRYRUN -eq 0 ]]; mgmt_cli set generic-object uid ${gwuid} logPolicy.forwardLogs true logPolicy.logForwardTarget ${loguid} logPolicy.logForwardSchedule ${DEFAULTTIMEUID}
         fi
       done < ${OUTPUTDIR}/${domain}.gwandlogserver.list
 
