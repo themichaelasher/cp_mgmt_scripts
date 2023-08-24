@@ -147,9 +147,9 @@ function set_log_forwarding(){
         logname="$(mgmt_cli show generic-object uid $loguid -f json |jq -r .name)"
         if [[ -z "${logname}" && -n "${logname}" ]]; then
           echo -e "  Error: Unable to find log server name for ${gwname} (Loguid: $loguid)"
-        else
+        fi
           echo -e "  Changing: ${gwname} (Forward to ${logname} at ${DEFAULTTIME})"
-          #mgmt_cli set generic-object uid ${gwuid} logPolicy.forwardLogs true logPolicy.logForwardTarget ${loguid} logPolicy.logForwardSchedule ${DEFAULTTIMEUID}
+          mgmt_cli set generic-object uid ${gwuid} logPolicy.forwardLogs true logPolicy.logForwardTarget ${loguid} logPolicy.logForwardSchedule ${DEFAULTTIMEUID}
         fi
       done < ${OUTPUTDIR}/${domain}.gwandlogserver.list
 
