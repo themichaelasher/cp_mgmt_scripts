@@ -150,7 +150,6 @@ function set_log_forwarding(){
         fi
           echo -e "  Changing: ${gwname} (Forward to ${logname} at ${DEFAULTTIME})"
           [[ $DRYRUN -eq 0 ]]; mgmt_cli set generic-object uid ${gwuid} logPolicy.forwardLogs true logPolicy.logForwardTarget ${loguid} logPolicy.logForwardSchedule ${DEFAULTTIMEUID}
-        fi
       done < ${OUTPUTDIR}/${domain}.gwandlogserver.list
 
       # Publish Changes and logout
