@@ -8,6 +8,11 @@
 # - 2023021401 - Added logging output for visibilidy to all commands.
 # - 2023021301 - Initial script creation
 ########################################################################################
+#
+# Known Issues
+# - The script does not account for multiple log servers definitions.
+# - Not tested on non-MDS management
+########################################################################################
 
 # Show the 30 second warning. Set to 0 to disable it
 SHOWWARNING=1
